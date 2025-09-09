@@ -1,0 +1,147 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-size-base: 16px;
+
+    --background: 207.3 43.8% 95.9%;
+    --foreground: 209.1 40% 11.2%;
+    --card: 207.3 43.8% 95.9%;
+    --card-foreground: 209.1 40% 11.2%;
+    --popover: 207.3 43.8% 95.9%;
+    --popover-foreground: 209.1 40% 11.2%;
+    --primary: 209.1 40% 11.2%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 207.3 26.5% 90%;
+    --secondary-foreground: 209.1 40% 11.2%;
+    --muted: 207.3 26.5% 90%;
+    --muted-foreground: 209.1 40% 41.2%;
+    --accent: 180 82% 32%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 207.3 26.5% 90%;
+    --input: 207.3 26.5% 90%;
+    --ring: 209.1 40% 11.2%;
+    --radius: 0.5rem;
+    --chart-1: 209.1 40% 11.2%;
+    --chart-2: 180 82% 32%;
+    --chart-3: 38 40% 98%;
+    --chart-4: 288 40% 98%;
+    --chart-5: 0 63% 31%;
+    --sidebar-background: 207.3 43.8% 95.9%;
+    --sidebar-foreground: 209.1 40% 11.2%;
+    --sidebar-primary: 209.1 40% 11.2%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 207.3 26.5% 90%;
+    --sidebar-accent-foreground: 209.1 40% 11.2%;
+    --sidebar-border: 207.3 26.5% 90%;
+    --sidebar-ring: 209.1 40% 11.2%;
+    --speaker-rita: 180 82% 32%;
+    --speaker-das: 209.1 40% 11.2%;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 340 90% 65%; /* Pink */
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%; /* Red */
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 340 90% 65%;
+    --chart-1: 340 90% 65%; /* Pink */
+    --chart-2: 0 84% 60%;   /* Red */
+    --chart-3: 210 90% 55%; /* Blue */
+    --chart-4: 150 80% 60%; /* Green */
+    --chart-5: 60 90% 60%;  /* Yellow */
+    --sidebar-background: 240 10% 3.9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 340 90% 65%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 340 90% 65%;
+    --speaker-rita: 0 84% 60%;
+    --speaker-das: 340 90% 65%;
+  }
+
+  .theme-rose {
+    --background: 350 60% 5%;
+    --foreground: 350 20% 98%;
+    --card: 350 60% 8%;
+    --card-foreground: 350 20% 98%;
+    --popover: 350 60% 5%;
+    --popover-foreground: 350 20% 98%;
+    --primary: 340 90% 65%; /* Pink */
+    --primary-foreground: 350 20% 10%;
+    --secondary: 350 50% 15%;
+    --secondary-foreground: 350 20% 98%;
+    --muted: 350 50% 15%;
+    --muted-foreground: 350 20% 65%;
+    --accent: 350 50% 15%;
+    --accent-foreground: 350 20% 98%;
+    --destructive: 0 84% 60%; /* Red */
+    --destructive-foreground: 0 0% 98%;
+    --border: 350 50% 15%;
+    --input: 350 50% 15%;
+    --ring: 340 90% 65%;
+    --radius: 0.5rem;
+    --chart-1: 340 90% 65%;
+    --chart-2: 0 84% 60%;
+    --chart-3: 150 80% 60%;
+    --chart-4: 210 90% 65%;
+    --chart-5: 60 90% 65%;
+    --sidebar-background: 350 60% 8%;
+    --sidebar-foreground: 350 20% 98%;
+    --sidebar-primary: 340 90% 65%;
+    --sidebar-primary-foreground: 350 20% 10%;
+    --sidebar-accent: 350 50% 15%;
+    --sidebar-accent-foreground: 350 20% 98%;
+    --sidebar-border: 350 50% 20%;
+    --sidebar-ring: 340 90% 65%;
+    --speaker-rita: 0 84% 60%;
+    --speaker-das: 340 90% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: var(--font-size-base);
+  }
+
+  html, body, #__next {
+    @apply h-full;
+  }
+
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-roboto {
+    font-family: 'Roboto', sans-serif;
+  }
+
+  .font-lato {
+    font-family: 'Lato', sans-serif;
+  }
+}
