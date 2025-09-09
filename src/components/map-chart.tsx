@@ -4,7 +4,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { WorldMapSvg } from './world-map-svg';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { analyzeEconomicData } from '@/ai/flows/analyze-economic-data';
+import { useAI } from '@/hooks/use-ai';
 import { Skeleton } from './ui/skeleton';
 import { Loader2 } from 'lucide-react';
 
@@ -68,22 +68,9 @@ export function MapChart({ data, indicator, year, min, max, countryNames }: MapC
 
     if (value !== undefined) {
       analysisTimeoutRef.current = setTimeout(() => {
-        analyzeEconomicData({
-          indicator: indicator,
-          region: countryName,
-          timePeriod: year.toString(),
-          dataValue: value,
-        })
-        .then((result) => {
-          setTooltip((prev) => (prev ? { ...prev, analysis: result.analysis } : null));
-        })
-        .catch((error) => {
-          console.error('AI analysis failed:', error);
-          setTooltip((prev) => (prev ? { ...prev, analysis: 'Could not load analysis.' } : null));
-        })
-        .finally(() => {
-          setAnalysisLoading(false);
-        });
+        // TODO: Implement with new AI system
+        setTooltip((prev) => (prev ? { ...prev, analysis: 'AI analysis temporarily disabled during system update.' } : null));
+        setAnalysisLoading(false);
       }, 500);
     } else {
         setAnalysisLoading(false);

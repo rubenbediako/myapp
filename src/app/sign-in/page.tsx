@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,10 +27,14 @@ const GoogleIcon = () => (
 export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { sendPasswordReset } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,9 +44,31 @@ export default function SignInPage() {
       toast({ title: 'Success', description: 'Signed in successfully.' });
       router.push('/dashboard');
     } catch (error: any) {
+      let errorMessage = 'An error occurred during sign in.';
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email address.';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email address.';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'This account has been disabled.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many failed attempts. Please try again later.';
+          break;
+        default:
+          errorMessage = error.message;
+      }
+      
       toast({
         title: 'Sign In Error',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -56,13 +83,61 @@ export default function SignInPage() {
         toast({ title: 'Success', description: 'Signed in successfully with Google.' });
         router.push('/dashboard');
     } catch (error: any) {
+        let errorMessage = 'An error occurred during Google sign in.';
+        
+        switch (error.code) {
+          case 'auth/popup-closed-by-user':
+            errorMessage = 'Sign in was cancelled.';
+            break;
+          case 'auth/popup-blocked':
+            errorMessage = 'Pop-up was blocked by your browser.';
+            break;
+          default:
+            errorMessage = error.message;
+        }
+        
         toast({
             title: 'Google Sign In Error',
-            description: error.message,
+            description: errorMessage,
             variant: 'destructive',
         });
     } finally {
         setGoogleLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    try {
+      await sendPasswordReset(resetEmail);
+      toast({ 
+        title: 'Password Reset Sent', 
+        description: 'Check your email for password reset instructions.' 
+      });
+      setShowResetForm(false);
+      setResetEmail('');
+    } catch (error: any) {
+      let errorMessage = 'An error occurred while sending reset email.';
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email address.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email address.';
+          break;
+        default:
+          errorMessage = error.message;
+      }
+      
+      toast({
+        title: 'Password Reset Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -71,59 +146,104 @@ export default function SignInPage() {
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign In</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardTitle>{showResetForm ? 'Reset Password' : 'Sign In'}</CardTitle>
+          <CardDescription>
+            {showResetForm 
+              ? 'Enter your email to receive a password reset link.'
+              : 'Enter your credentials to access your account.'
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={googleLoading || loading}>
-                {googleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                Sign In with Google
-            </Button>
-             <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-            <form onSubmit={handleSignIn} className="space-y-4">
+          {showResetForm ? (
+            <form onSubmit={handlePasswordReset} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="reset-email">Email</Label>
                 <Input
-                  id="email"
+                  id="reset-email"
                   type="email"
                   placeholder="m@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <Button type="submit" className="w-full" disabled={resetLoading}>
+                  {resetLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Send Reset Link
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => setShowResetForm(false)}
+                  disabled={resetLoading}
+                >
+                  Back to Sign In
+                </Button>
               </div>
-              <Button type="submit" className="w-full" disabled={loading || googleLoading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign In
-              </Button>
             </form>
-           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <Link href="/sign-up" className="underline">
-              Sign up
-            </Link>
-          </p>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={googleLoading || loading}>
+                  {googleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                  Sign In with Google
+              </Button>
+               <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading || googleLoading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Sign In
+                </Button>
+              </form>
+              <div className="space-y-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowResetForm(true)}
+                  className="text-sm text-muted-foreground hover:text-primary underline"
+                >
+                  Forgot your password?
+                </button>
+                <p className="text-sm text-muted-foreground">
+                  Don't have an account?{' '}
+                  <Link href="/sign-up" className="underline hover:text-primary">
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

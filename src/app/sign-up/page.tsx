@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,22 +27,83 @@ const GoogleIcon = () => (
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { sendEmailVerification } = useAuth();
+
+  const validatePassword = (password: string) => {
+    if (password.length < 6) {
+      return 'Password must be at least 6 characters long';
+    }
+    if (!/(?=.*[a-z])/.test(password)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!/(?=.*[A-Z])/.test(password)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!/(?=.*\d)/.test(password)) {
+      return 'Password must contain at least one number';
+    }
+    return null;
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      toast({ title: 'Success', description: 'Account created successfully. You are now signed in.' });
+      // Validate passwords match
+      if (password !== confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+      
+      // Validate password strength
+      const passwordError = validatePassword(password);
+      if (passwordError) {
+        throw new Error(passwordError);
+      }
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Send email verification
+      try {
+        await sendEmailVerification();
+        toast({ 
+          title: 'Account Created Successfully', 
+          description: 'Please check your email to verify your account. You can start using the app immediately.' 
+        });
+      } catch (verificationError) {
+        console.warn('Failed to send verification email:', verificationError);
+        toast({ 
+          title: 'Account Created Successfully', 
+          description: 'Account created but verification email could not be sent.' 
+        });
+      }
+      
       router.push('/dashboard');
     } catch (error: any) {
+      let errorMessage = 'An error occurred during sign up.';
+      
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'An account with this email already exists.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email address.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Password is too weak. Please choose a stronger password.';
+          break;
+        default:
+          errorMessage = error.message;
+      }
+      
       toast({
         title: 'Sign Up Error',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -56,9 +118,25 @@ export default function SignUpPage() {
         toast({ title: 'Success', description: 'Account created successfully with Google.' });
         router.push('/dashboard');
     } catch (error: any) {
+        let errorMessage = 'An error occurred during Google sign up.';
+        
+        switch (error.code) {
+          case 'auth/popup-closed-by-user':
+            errorMessage = 'Sign up was cancelled.';
+            break;
+          case 'auth/popup-blocked':
+            errorMessage = 'Pop-up was blocked by your browser.';
+            break;
+          case 'auth/account-exists-with-different-credential':
+            errorMessage = 'An account already exists with this email using a different sign-in method.';
+            break;
+          default:
+            errorMessage = error.message;
+        }
+        
         toast({
             title: 'Google Sign Up Error',
-            description: error.message,
+            description: errorMessage,
             variant: 'destructive',
         });
     } finally {
@@ -70,7 +148,7 @@ export default function SignUpPage() {
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign Up</CardTitle>
+          <CardTitle>Create Account</CardTitle>
           <CardDescription>Create a new account to get started.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -111,15 +189,29 @@ export default function SignUpPage() {
                   required
                   minLength={6}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 6 characters with uppercase, lowercase, and number.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
               </div>
               <Button type="submit" className="w-full" disabled={loading || googleLoading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign Up
+                Create Account
               </Button>
             </form>
-           <p className="mt-4 text-center text-sm text-muted-foreground">
+           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/sign-in" className="underline">
+            <Link href="/sign-in" className="underline hover:text-primary">
               Sign in
             </Link>
           </p>

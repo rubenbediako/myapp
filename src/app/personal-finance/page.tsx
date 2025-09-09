@@ -1,21 +1,15 @@
 
-'use client';
-
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, Mic } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { analyzePersonalFinance, AnalyzePersonalFinanceOutput } from '@/ai/flows/analyze-personal-finance';
-import { generatePodcast, GeneratePodcastOutput } from '@/ai/flows/generate-podcast';
-import { countryNameMap } from '@/data/economic-data';
-
-const countries = Object.keys(countryNameMap);
+import UnderConstructionPage from '@/components/under-construction';
 
 export default function PersonalFinancePage() {
+  return (
+    <UnderConstructionPage 
+      title="Personal Finance Analysis"
+      description="AI-powered personal finance analysis is being updated."
+      backLink="/dashboard"
+    />
+  );
+}
     const [country, setCountry] = useState<string>('');
     const [loadingStatus, setLoadingStatus] = useState<string | null>(null);
     const [result, setResult] = useState<AnalyzePersonalFinanceOutput | null>(null);

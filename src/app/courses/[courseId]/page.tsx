@@ -1,13 +1,15 @@
 
-'use client';
+import UnderConstructionPage from '@/components/under-construction';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, ArrowLeft, Mic, BookOpen, Download, Award, Wand2, CheckCircle, XCircle, Percent, Lock, Image as ImageIcon, ArrowRight, BadgeCheck } from 'lucide-react';
+export default function CoursePage() {
+  return (
+    <UnderConstructionPage 
+      title="Course Content"
+      description="AI-powered course generation is being updated."
+      backLink="/courses"
+    />
+  );
+}
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";

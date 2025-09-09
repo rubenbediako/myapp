@@ -1,6 +1,6 @@
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
 
 // Check if environment variables are properly configured
 const isValidConfig = (value: string | undefined) => {
@@ -29,19 +29,22 @@ const firebaseConfig = {
   databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL || `https://demo-project.firebaseio.com`
 };
 
-// Only initialize Firebase if we have valid config
-let app, auth, googleProvider;
+// Initialize Firebase
+let app: FirebaseApp;
+let auth: Auth;
+let googleProvider: GoogleAuthProvider;
 
 try {
   app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
+  
+  // Configure Google provider
+  googleProvider.addScope('profile');
+  googleProvider.addScope('email');
 } catch (error) {
-  console.warn('Firebase initialization failed:', error);
-  // Create mock objects for development
-  app = null;
-  auth = null;
-  googleProvider = null;
+  console.error('Firebase initialization failed:', error);
+  throw new Error('Failed to initialize Firebase');
 }
 
 export { app, auth, googleProvider };

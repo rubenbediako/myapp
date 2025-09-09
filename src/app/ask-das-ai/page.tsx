@@ -8,16 +8,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Mic, Wand2, Square, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { askDasAi, AskDasAiOutput } from '@/ai/flows/ask-das-ai';
-import { generatePodcast, GeneratePodcastOutput } from '@/ai/flows/generate-podcast';
-import { generateImage, GenerateImageOutput } from '@/ai/flows/generate-image';
+
+// Types for our API responses
+interface PodcastLine {
+  speaker: "Speaker1" | "Speaker2";
+  line: string;
+}
+
+interface AskDasAiResponse {
+  podcastScript: PodcastLine[];
+}
+
+interface GeneratePodcastResponse {
+  audioUrl: string;
+  duration: number;
+}
+
+interface GenerateImageResponse {
+  imageUrl: string;
+  description: string;
+}
 
 export default function AskDasAiPage() {
     const [query, setQuery] = useState('');
     const [loadingStatus, setLoadingStatus] = useState<string | null>(null);
-    const [result, setResult] = useState<AskDasAiOutput | null>(null);
-    const [podcast, setPodcast] = useState<GeneratePodcastOutput | null>(null);
-    const [imageResult, setImageResult] = useState<GenerateImageOutput | null>(null);
+    const [result, setResult] = useState<AskDasAiResponse | null>(null);
+    const [podcast, setPodcast] = useState<GeneratePodcastResponse | null>(null);
+    const [imageResult, setImageResult] = useState<GenerateImageResponse | null>(null);
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const { toast } = useToast();
     
@@ -91,17 +108,28 @@ export default function AskDasAiPage() {
         setPodcast(null);
         setImageResult(null);
         try {
-            const apiResult = await askDasAi({ query });
+            // Call our new API endpoint
+            const response = await fetch('/api/ai/ask-das-ai', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate analysis');
+            }
+
+            const apiResult: AskDasAiResponse = await response.json();
             setResult(apiResult);
             
-            setLoadingStatus("Generating podcast...");
-            const podcastTitle = `Das Answers: ${query.substring(0, 30)}...`;
-            const narrationScript = apiResult.podcastScript.map(line => `${line.speaker}: ${line.line}`).join('\n');
-            const resultPodcast = await generatePodcast({
-                title: podcastTitle,
-                narrationScript,
-            });
-            setPodcast(resultPodcast);
+            setLoadingStatus("Podcast generation not yet implemented...");
+            // TODO: Implement podcast generation with Vercel AI SDK
+            // const podcastTitle = `Das Answers: ${query.substring(0, 30)}...`;
+            // const narrationScript = apiResult.podcastScript.map(line => `${line.speaker}: ${line.line}`).join('\n');
+            
+            setLoadingStatus(null);
 
         } catch (error) {
             console.error(error);
@@ -120,9 +148,15 @@ export default function AskDasAiPage() {
         setIsGeneratingImage(true);
         setImageResult(null);
         try {
-            const imagePrompt = `Create a professional, high-quality visual representation of the economic or business concept: "${query}". The style should be modern, clean, and suitable for a financial news publication.`;
-            const result = await generateImage({ prompt: imagePrompt });
-            setImageResult(result);
+            // TODO: Implement image generation with a proper image API
+            toast({
+                title: "Image Generation",
+                description: "Image generation will be implemented with a dedicated image API.",
+                variant: "default"
+            });
+            // const imagePrompt = `Create a professional, high-quality visual representation of the economic or business concept: "${query}". The style should be modern, clean, and suitable for a financial news publication.`;
+            // const result = await generateImage({ prompt: imagePrompt });
+            // setImageResult(result);
         } catch (error) {
             console.error(error);
             toast({

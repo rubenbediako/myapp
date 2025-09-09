@@ -1,16 +1,15 @@
 
-'use client';
+import UnderConstructionPage from '@/components/under-construction';
 
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, Mic } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { analyzeEmploymentLandscape, AnalyzeEmploymentLandscapeOutput } from '@/ai/flows/analyze-employment-landscape';
-import { generatePodcast, GeneratePodcastOutput } from '@/ai/flows/generate-podcast';
+export default function EmploymentPage() {
+  return (
+    <UnderConstructionPage 
+      title="Employment & Unemployment Analysis"
+      description="AI-powered employment analysis is being updated."
+      backLink="/dashboard"
+    />
+  );
+}
 import { countryNameMap } from '@/data/economic-data';
 
 const countries = Object.keys(countryNameMap);

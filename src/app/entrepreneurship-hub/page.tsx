@@ -13,11 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Mic, FileText, Wand2, Download, FileSignature, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { countryNameMap } from '@/data/economic-data';
-import { analyzeEntrepreneurshipLandscape, AnalyzeEntrepreneurshipLandscapeOutput } from '@/ai/flows/analyze-entrepreneurship-landscape';
-import { analyzeEntrepreneurshipTopic, AnalyzeEntrepreneurshipTopicOutput } from '@/ai/flows/analyze-entrepreneurship-topic';
-import { generateBusinessPlan, GenerateBusinessPlanOutput } from '@/ai/flows/generate-business-plan';
-import { generateBusinessProposal, GenerateBusinessProposalOutput } from '@/ai/flows/generate-business-proposal';
-import { generatePodcast, GeneratePodcastOutput } from '@/ai/flows/generate-podcast';
+import { useAI } from '@/hooks/use-ai';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -144,14 +140,14 @@ Das: ${apiResult.futureOutlook}
 
 export default function EntrepreneurshipHub() {
   const { toast } = useToast();
+  const { generateBusinessPlan, analyzeEconomics, isLoading } = useAI();
   const businessPlanRef = useRef<HTMLDivElement>(null);
   const businessProposalRef = useRef<HTMLDivElement>(null);
 
   // State for Country Guide
   const [country, setCountry] = useState<string>('');
   const [loadingGuideStatus, setLoadingGuideStatus] = useState<string|null>(null);
-  const [guideResult, setGuideResult] = useState<AnalyzeEntrepreneurshipLandscapeOutput | null>(null);
-  const [guidePodcast, setGuidePodcast] = useState<GeneratePodcastOutput | null>(null);
+  const [guideResult, setGuideResult] = useState<any | null>(null);
 
   // State for Business Plan Generator
   const [planIdea, setPlanIdea] = useState('');
@@ -160,7 +156,7 @@ export default function EntrepreneurshipHub() {
   const [planCountry, setPlanCountry] = useState('');
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [loadingPlanPdf, setLoadingPlanPdf] = useState(false);
-  const [planResult, setPlanResult] = useState<GenerateBusinessPlanOutput | null>(null);
+  const [planResult, setPlanResult] = useState<any | null>(null);
   
   // State for Business Proposal Generator
   const [proposalClient, setProposalClient] = useState('');
@@ -170,7 +166,7 @@ export default function EntrepreneurshipHub() {
   const [proposalCost, setProposalCost] = useState('');
   const [loadingProposal, setLoadingProposal] = useState(false);
   const [loadingProposalPdf, setLoadingProposalPdf] = useState(false);
-  const [proposalResult, setProposalResult] = useState<GenerateBusinessProposalOutput | null>(null);
+  const [proposalResult, setProposalResult] = useState<any | null>(null);
 
 
   const handleGenerateGuide = async () => {

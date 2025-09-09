@@ -9,8 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { generateDailyBriefing, GenerateDailyBriefingOutput as BriefingScriptOutput } from '@/ai/flows/generate-daily-briefing';
-import { generatePodcast, GeneratePodcastOutput } from '@/ai/flows/generate-podcast';
+import { useAI } from '@/hooks/use-ai';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 
@@ -23,26 +22,44 @@ interface BriefingResult {
     audioUrl?: string;
 }
 
+interface BriefingResult {
+    title: string;
+    script: string;
+    audioUrl?: string;
+}
+
 export default function LandingPage() {
   const [loadingBriefing, setLoadingBriefing] = useState<string | null>(null);
   const [briefing, setBriefing] = useState<BriefingResult | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string>("Global");
   const { toast } = useToast();
+  const { analyzeEconomics, isLoading } = useAI();
   
   const handleGenerateBriefing = async () => {
-      setLoadingBriefing("Generating script...");
+      setLoadingBriefing("Generating briefing...");
       setBriefing(null);
       try {
-          const scriptResult = await generateDailyBriefing({ region: selectedRegion });
-          setBriefing(scriptResult);
-
-          setLoadingBriefing("Generating audio...");
-          const audioResult = await generatePodcast({
-              title: scriptResult.title,
-              narrationScript: scriptResult.script
+          // Use the new economic analysis API
+          const result = await analyzeEconomics({
+              topic: `Daily economic briefing for ${selectedRegion}`,
+              type: 'macro-economic',
+              region: selectedRegion,
+              timeframe: 'current'
           });
 
-          setBriefing(prev => prev ? { ...prev, audioUrl: audioResult.audioUrl } : null);
+          // Transform the result into the expected format
+          const briefingResult: BriefingResult = {
+              title: `Daily Economic Briefing - ${selectedRegion}`,
+              script: `${result.summary}\n\nKey Findings:\n${result.keyFindings.join('\n')}\n\nImplications:\n${result.implications}\n\nRecommendations:\n${result.recommendations.join('\n')}`,
+          };
+
+          setBriefing(briefingResult);
+
+          toast({
+              title: "Briefing Generated",
+              description: "Your daily economic briefing is ready!",
+              variant: "default"
+          });
 
       } catch (error) {
           console.error(error);
