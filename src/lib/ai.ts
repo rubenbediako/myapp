@@ -1,25 +1,10 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { google } from '@ai-sdk/google';
 import { generateObject, generateText, streamText } from 'ai';
 import { z } from 'zod';
 
-// Create a Google provider instance with explicit API key configuration
-function createGoogleProvider() {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('Google Generative AI API key is missing. Pass it using the \'apiKey\' parameter or the GOOGLE_GENERATIVE_AI_API_KEY environment variable.');
-  }
-  
-  return createGoogleGenerativeAI({
-    apiKey,
-  });
-}
-
-// Create the default model using the configured provider
-function getDefaultModel() {
-  const googleProvider = createGoogleProvider();
-  return googleProvider('gemini-1.5-flash');
-}
+// Simple approach - use the default google provider
+// The API key will be automatically read from GOOGLE_GENERATIVE_AI_API_KEY
+const defaultModel = google('gemini-1.5-flash');
 
 /**
  * Generate text using Google's Gemini model
@@ -28,7 +13,6 @@ export async function generateAIText(prompt: string, options?: {
   temperature?: number;
 }) {
   try {
-    const defaultModel = getDefaultModel();
     const { text } = await generateText({
       model: defaultModel,
       prompt,
@@ -53,7 +37,6 @@ export async function generateStructuredData<T>(
   }
 ): Promise<T> {
   try {
-    const defaultModel = getDefaultModel();
     const { object } = await generateObject({
       model: defaultModel,
       prompt,
@@ -74,7 +57,6 @@ export async function generateStructuredData<T>(
 export function createStreamingResponse(prompt: string, options?: {
   temperature?: number;
 }) {
-  const defaultModel = getDefaultModel();
   return streamText({
     model: defaultModel,
     prompt,
