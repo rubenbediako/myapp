@@ -1,27 +1,51 @@
 #!/usr/bin/env node
 
-// Test our updated AI library
+// Test our updated AI library through API endpoints
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
-import { generateAIText, analyzeMacroeconomics } from './src/lib/ai.ts';
+console.log('=== Testing Updated AI Library via API ===');
 
-console.log('=== Testing Updated AI Library ===');
-
-async function testAILibrary() {
+async function testAPIEndpoints() {
   try {
-    console.log('Testing generateAIText...');
-    const textResult = await generateAIText('Say hello in one word', 'economicAnalysis');
-    console.log('✅ generateAIText successful:', textResult);
+    console.log('Testing /api/test-ai endpoint...');
+    const response1 = await fetch('http://localhost:3000/api/test-ai', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt: 'Say hello in one word' })
+    });
     
-    console.log('\nTesting analyzeMacroeconomics...');
-    const macroResult = await analyzeMacroeconomics('United States', ['GDP Growth', 'Inflation']);
-    console.log('✅ analyzeMacroeconomics successful:', JSON.stringify(macroResult, null, 2));
+    if (response1.ok) {
+      const result1 = await response1.json();
+      console.log('✅ test-ai successful:', result1);
+    } else {
+      console.log('❌ test-ai failed:', response1.status, await response1.text());
+    }
+    
+    console.log('\nTesting /api/ai/economic-analysis endpoint...');
+    const response2 = await fetch('http://localhost:3000/api/ai/economic-analysis', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        prompt: 'Analyze the economic situation of the United States focusing on GDP and inflation' 
+      })
+    });
+    
+    if (response2.ok) {
+      const result2 = await response2.json();
+      console.log('✅ economic-analysis successful:', JSON.stringify(result2, null, 2));
+    } else {
+      console.log('❌ economic-analysis failed:', response2.status, await response2.text());
+    }
     
   } catch (error) {
-    console.log('❌ Test failed:', error.message);
-    console.log('Stack:', error.stack);
+    console.error('❌ Error testing API endpoints:', error.message);
   }
 }
 
-testAILibrary().catch(console.error);
+// Run the test
+testAPIEndpoints().catch(console.error);

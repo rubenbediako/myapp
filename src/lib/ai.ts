@@ -105,42 +105,61 @@ Return only the JSON object, no additional text or formatting.`;
  * Helper function to generate schema descriptions
  */
 function generateSchemaDescription(schema: z.ZodSchema): string {
-  // This is a simplified schema description generator
-  // You can enhance this based on your specific needs
-  if (schema instanceof z.ZodObject) {
-    const shape = schema.shape;
-    const properties: string[] = [];
+  try {
+    if (schema instanceof z.ZodObject) {
+      const shape = schema.shape;
+      const properties: string[] = [];
+      
+      Object.entries(shape).forEach(([key, value]) => {
+        if (value instanceof z.ZodString) {
+          properties.push(`"${key}": "string value"`);
+        } else if (value instanceof z.ZodArray) {
+          properties.push(`"${key}": ["array", "of", "items"]`);
+        } else if (value instanceof z.ZodObject) {
+          properties.push(`"${key}": {"nested": "object"}`);
+        } else if (value instanceof z.ZodEnum) {
+          properties.push(`"${key}": "enum_value"`);
+        } else {
+          properties.push(`"${key}": "value"`);
+        }
+      });
+      
+      return `{\n  ${properties.join(',\n  ')}\n}`;
+    }
     
-    Object.entries(shape).forEach(([key, value]) => {
-      if (value instanceof z.ZodString) {
-        properties.push(`"${key}": "string"`);
-      } else if (value instanceof z.ZodArray) {
-        properties.push(`"${key}": ["array of items"]`);
-      } else if (value instanceof z.ZodObject) {
-        properties.push(`"${key}": {object}`);
-      } else {
-        properties.push(`"${key}": "value"`);
-      }
-    });
-    
-    return `{\n  ${properties.join(',\n  ')}\n}`;
+    return '{"result": "object"}';
+  } catch (error) {
+    console.error('Error generating schema description:', error);
+    return '{"result": "object"}';
   }
-  
-  return '{}';
 }
 
 /**
- * Extract JSON from AI response
+ * Extract JSON from AI response with better error handling
  */
 function extractJSON(text: string): string {
-  // Try to find JSON in the response
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    return jsonMatch[0];
+  try {
+    // Remove any markdown code blocks
+    let cleanText = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    
+    // Try to find JSON object or array in the response
+    const jsonMatch = cleanText.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+    if (jsonMatch) {
+      return jsonMatch[0];
+    }
+    
+    // If no JSON found, try to parse the entire response
+    cleanText = cleanText.trim();
+    if (cleanText.startsWith('{') || cleanText.startsWith('[')) {
+      return cleanText;
+    }
+    
+    // Last resort: wrap in object
+    return `{"result": ${JSON.stringify(cleanText)}}`;
+  } catch (error) {
+    console.error('Error extracting JSON:', error);
+    return `{"error": "Failed to parse response", "originalText": ${JSON.stringify(text)}}`;
   }
-  
-  // If no JSON found, assume the entire response is JSON
-  return text.trim();
 }
 
 /**
@@ -156,7 +175,37 @@ export async function createStreamingResponse(prompt: string, options?: {
     }
   });
   
-  return model.generateContentStream(prompt);
+  try {
+    const result = await model.generateContentStream(prompt);
+    
+    // Create a ReadableStream that yields the streaming content
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            if (chunkText) {
+              controller.enqueue(new TextEncoder().encode(chunkText));
+            }
+          }
+          controller.close();
+        } catch (error) {
+          console.error('Streaming error:', error);
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
+    });
+  } catch (error) {
+    console.error('Error creating streaming response:', error);
+    return new Response('Error generating response', { status: 500 });
+  }
 }
 
 // Export commonly used schemas

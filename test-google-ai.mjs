@@ -1,5 +1,4 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { generateText } from 'ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Load environment variables (Next.js automatically loads .env.local)
 const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -15,23 +14,24 @@ if (!apiKey) {
 
 async function testGoogleAI() {
   try {
-    console.log('Creating Google provider...');
-    const googleProvider = createGoogleGenerativeAI({
-      apiKey: apiKey,
-    });
+    console.log('Creating Google AI instance...');
+    const genAI = new GoogleGenerativeAI(apiKey);
     
     console.log('Creating model...');
-    const model = googleProvider('gemini-1.5-flash');
-    
-    console.log('Making API call...');
-    const result = await generateText({
-      model,
-      prompt: 'Respond with exactly "Hello World"',
-      temperature: 0.1,
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        temperature: 0.1,
+      }
     });
     
-    console.log('✅ SUCCESS! AI Response:', result.text);
-    return { success: true, result: result.text };
+    console.log('Making API call...');
+    const result = await model.generateContent('Respond with exactly "Hello World"');
+    const response = await result.response;
+    const text = response.text();
+    
+    console.log('✅ SUCCESS! AI Response:', text);
+    return { success: true, result: text };
   } catch (error) {
     console.error('❌ FAILED! Error:', error.message);
     return { success: false, error: error.message };

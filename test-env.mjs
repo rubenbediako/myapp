@@ -61,37 +61,32 @@ async function testDirectAPI() {
   }
 }
 
-async function testVercelAISDK() {
+async function testDirectGoogleAI() {
   try {
-    console.log('\n=== Testing Vercel AI SDK ===');
+    console.log('\n=== Testing Direct Google AI SDK ===');
     
     // Use dynamic import for ES modules
-    const { createGoogleGenerativeAI } = await import('@ai-sdk/google');
-    const { generateText } = await import('ai');
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
     
-    const googleProvider = createGoogleGenerativeAI({
-      apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-    });
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
-    const model = googleProvider('gemini-1.5-flash');
+    const result = await model.generateContent('Say hello in one word.');
+    const response = await result.response;
+    const text = response.text();
     
-    const { text } = await generateText({
-      model,
-      prompt: 'Say hello in one word.',
-    });
-    
-    console.log('✅ Vercel AI SDK test successful!');
+    console.log('✅ Direct Google AI SDK test successful!');
     console.log('Response:', text);
     
   } catch (error) {
-    console.log('❌ Vercel AI SDK test failed:', error.message);
+    console.log('❌ Direct Google AI SDK test failed:', error.message);
     console.log('Stack:', error.stack);
   }
 }
 
 async function main() {
   await testDirectAPI();
-  await testVercelAISDK();
+  await testDirectGoogleAI();
 }
 
 main().catch(console.error);

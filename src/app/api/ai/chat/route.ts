@@ -1,5 +1,4 @@
 import { createStreamingResponse } from '@/lib/ai';
-import { streamText } from 'ai';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
@@ -21,11 +20,11 @@ export async function POST(request: NextRequest) {
       .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
       .join('\n\n') + '\n\nAssistant:';
 
-    const result = createStreamingResponse(prompt, {
+    const result = await createStreamingResponse(prompt, {
       temperature: temperature ?? 0.7,
     });
 
-    return result.toDataStreamResponse();
+    return result;
   } catch (error) {
     console.error('Error in chat:', error);
     
