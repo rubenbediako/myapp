@@ -1,17 +1,15 @@
 
-'use client';
+import UnderConstructionPage from '@/components/under-construction';
 
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Mic } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { analyzeSecurityRisk, AnalyzeSecurityRiskOutput } from '@/ai/flows/analyze-security-risk';
-import { generatePodcast, GeneratePodcastOutput } from '@/ai/flows/generate-podcast';
-import { countryNameMap } from '@/data/economic-data';
+export default function SecurityRiskPage() {
+  return (
+    <UnderConstructionPage 
+      title="Security Risk Analysis"
+      description="AI-powered security risk analysis is being updated to use our new AI system."
+      backLink="/dashboard"
+    />
+  );
+}
 
 const countries = Object.keys(countryNameMap);
 

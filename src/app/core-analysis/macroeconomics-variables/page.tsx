@@ -1,17 +1,15 @@
 
-'use client';
+import UnderConstructionPage from '@/components/under-construction';
 
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, Mic } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { analyzeMacroVariable, AnalyzeMacroVariableOutput } from '@/ai/flows/analyze-macro-variable';
-import { generatePodcast, GeneratePodcastOutput } from '@/ai/flows/generate-podcast';
-import { countryNameMap, indicators as allIndicators } from '@/data/economic-data';
+export default function MacroeconomicsVariablesPage() {
+  return (
+    <UnderConstructionPage 
+      title="Macroeconomics Variables Analysis"
+      description="AI-powered macroeconomic analysis is being updated to use our new AI system."
+      backLink="/dashboard"
+    />
+  );
+}
 
 const countries = Object.keys(countryNameMap);
 const indicators = allIndicators;

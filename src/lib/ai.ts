@@ -1,29 +1,38 @@
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateObject, generateText, streamText } from 'ai';
 import { z } from 'zod';
 
-// Initialize the Google AI provider
-const googleAI = google({
-  apiKey: process.env.GOOGLE_GENAI_API_KEY,
-});
+// Create a Google provider instance with explicit API key configuration
+function createGoogleProvider() {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('Google Generative AI API key is missing. Pass it using the \'apiKey\' parameter or the GOOGLE_GENERATIVE_AI_API_KEY environment variable.');
+  }
+  
+  return createGoogleGenerativeAI({
+    apiKey,
+  });
+}
 
-// Default model configuration
-const defaultModel = googleAI('gemini-1.5-flash');
+// Create the default model using the configured provider
+function getDefaultModel() {
+  const googleProvider = createGoogleProvider();
+  return googleProvider('gemini-1.5-flash');
+}
 
 /**
  * Generate text using Google's Gemini model
  */
 export async function generateAIText(prompt: string, options?: {
-  model?: string;
   temperature?: number;
-  maxTokens?: number;
 }) {
   try {
+    const defaultModel = getDefaultModel();
     const { text } = await generateText({
-      model: options?.model ? googleAI(options.model) : defaultModel,
+      model: defaultModel,
       prompt,
       temperature: options?.temperature ?? 0.7,
-      maxTokens: options?.maxTokens ?? 1000,
     });
     
     return text;
@@ -40,13 +49,12 @@ export async function generateStructuredData<T>(
   prompt: string,
   schema: z.ZodSchema<T>,
   options?: {
-    model?: string;
     temperature?: number;
   }
 ): Promise<T> {
   try {
     const { object } = await generateObject({
-      model: options?.model ? googleAI(options.model) : defaultModel,
+      model: defaultModel,
       prompt,
       schema,
       temperature: options?.temperature ?? 0.7,
@@ -63,15 +71,12 @@ export async function generateStructuredData<T>(
  * Create a streaming text response for real-time AI interactions
  */
 export function createStreamingResponse(prompt: string, options?: {
-  model?: string;
   temperature?: number;
-  maxTokens?: number;
 }) {
   return streamText({
-    model: options?.model ? googleAI(options.model) : defaultModel,
+    model: defaultModel,
     prompt,
     temperature: options?.temperature ?? 0.7,
-    maxTokens: options?.maxTokens ?? 1000,
   });
 }
 

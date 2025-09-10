@@ -1,18 +1,15 @@
 
-'use client';
+import UnderConstructionPage from '@/components/under-construction';
 
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Loader2, Mic, ChevronDown } from 'lucide-react';
-import { forecastEconomicData, ForecastEconomicDataOutput } from '@/ai/flows/forecast-economic-data';
-import { generatePodcast, GeneratePodcastOutput } from '@/ai/flows/generate-podcast';
-import { useToast } from '@/hooks/use-toast';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Line, LineChart, CartesianGrid, XAxis, YAxis, Legend } from 'recharts';
+export default function ForecastPredictionsPage() {
+  return (
+    <UnderConstructionPage 
+      title="Economic Forecast & Predictions"
+      description="AI-powered economic forecasting is being updated to use our new AI system."
+      backLink="/dashboard"
+    />
+  );
+}
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { indicators as allIndicators } from '@/data/economic-data';

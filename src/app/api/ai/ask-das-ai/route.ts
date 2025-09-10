@@ -36,8 +36,9 @@ Format the entire response as a 'podcastScript' array, where each element is an 
       );
     }
 
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to generate podcast script' },
+      { error: 'Failed to generate podcast script', details: errorMessage },
       { status: 500 }
     );
   }
