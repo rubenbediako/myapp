@@ -1,41 +1,32 @@
-import { google } from '@ai-sdk/google';
-import { generateObject, generateText, streamText } from 'ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 
-// Multi-provider setup for flexibility
-export const AI_PROVIDERS = {
-  google: {
-    fast: google('gemini-1.5-flash'),
-    pro: google('gemini-1.5-pro'),
-    latest: google('gemini-2.0-flash')
-  }
-  // Add more providers as needed:
-  // openai: {
-  //   gpt4: openai('gpt-4o'),
-  //   gpt35: openai('gpt-3.5-turbo')
-  // }
-} as const;
+// Initialize Google AI
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
 
-// Simple approach - use the default google provider
-// The API key will be automatically read from GOOGLE_GENERATIVE_AI_API_KEY
-const defaultModel = AI_PROVIDERS.google.fast;
+// Available models
+export const AI_MODELS = {
+  fast: 'gemini-1.5-flash',
+  pro: 'gemini-1.5-pro',
+  latest: 'gemini-1.5-flash'
+} as const;
 
 // Configuration for different AI tasks
 export const AI_CONFIG = {
   economicAnalysis: {
-    model: AI_PROVIDERS.google.pro,
-    temperature: 0.3, // More focused for analysis
-    maxTokens: 2000
+    model: AI_MODELS.pro,
+    temperature: 0.3,
+    maxOutputTokens: 2000
   },
   podcastGeneration: {
-    model: AI_PROVIDERS.google.fast,
-    temperature: 0.7, // More creative for conversations
-    maxTokens: 4000
+    model: AI_MODELS.fast,
+    temperature: 0.7,
+    maxOutputTokens: 4000
   },
   dataProcessing: {
-    model: AI_PROVIDERS.google.fast,
-    temperature: 0.1, // Very focused for data tasks
-    maxTokens: 1000
+    model: AI_MODELS.fast,
+    temperature: 0.1,
+    maxOutputTokens: 1000
   }
 } as const;
 
@@ -45,18 +36,21 @@ export const AI_CONFIG = {
 export async function generateAIText(
   prompt: string, 
   task: keyof typeof AI_CONFIG = 'economicAnalysis',
-  options?: { temperature?: number; maxTokens?: number }
+  options?: { temperature?: number; maxOutputTokens?: number }
 ) {
   try {
     const config = AI_CONFIG[task];
-    const { text } = await generateText({
+    const model = genAI.getGenerativeModel({ 
       model: config.model,
-      prompt,
-      temperature: options?.temperature ?? config.temperature,
-      maxTokens: options?.maxTokens ?? config.maxTokens,
+      generationConfig: {
+        temperature: options?.temperature ?? config.temperature,
+        maxOutputTokens: options?.maxOutputTokens ?? config.maxOutputTokens,
+      }
     });
     
-    return text;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
   } catch (error) {
     console.error('Error generating AI text:', error);
     throw new Error('Failed to generate AI text');
@@ -64,7 +58,7 @@ export async function generateAIText(
 }
 
 /**
- * Generate structured data using AI with Zod schema validation
+ * Generate structured data using AI with JSON schema
  */
 export async function generateStructuredData<T>(
   prompt: string,
@@ -74,14 +68,33 @@ export async function generateStructuredData<T>(
   }
 ): Promise<T> {
   try {
-    const { object } = await generateObject({
-      model: defaultModel,
-      prompt,
-      schema,
-      temperature: options?.temperature ?? 0.7,
+    const model = genAI.getGenerativeModel({ 
+      model: AI_MODELS.fast,
+      generationConfig: {
+        temperature: options?.temperature ?? 0.7,
+        maxOutputTokens: 2000,
+      }
     });
     
-    return object;
+    // Create a detailed prompt that explains the expected JSON structure
+    const schemaDescription = generateSchemaDescription(schema);
+    const enhancedPrompt = `${prompt}
+
+Please respond with a valid JSON object that matches this structure:
+${schemaDescription}
+
+Return only the JSON object, no additional text or formatting.`;
+
+    const result = await model.generateContent(enhancedPrompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    // Clean the response to extract JSON
+    const jsonText = extractJSON(text);
+    const parsedData = JSON.parse(jsonText);
+    
+    // Validate with Zod schema
+    return schema.parse(parsedData);
   } catch (error) {
     console.error('Error generating structured data:', error);
     throw new Error('Failed to generate structured data');
@@ -89,16 +102,61 @@ export async function generateStructuredData<T>(
 }
 
 /**
+ * Helper function to generate schema descriptions
+ */
+function generateSchemaDescription(schema: z.ZodSchema): string {
+  // This is a simplified schema description generator
+  // You can enhance this based on your specific needs
+  if (schema instanceof z.ZodObject) {
+    const shape = schema.shape;
+    const properties: string[] = [];
+    
+    Object.entries(shape).forEach(([key, value]) => {
+      if (value instanceof z.ZodString) {
+        properties.push(`"${key}": "string"`);
+      } else if (value instanceof z.ZodArray) {
+        properties.push(`"${key}": ["array of items"]`);
+      } else if (value instanceof z.ZodObject) {
+        properties.push(`"${key}": {object}`);
+      } else {
+        properties.push(`"${key}": "value"`);
+      }
+    });
+    
+    return `{\n  ${properties.join(',\n  ')}\n}`;
+  }
+  
+  return '{}';
+}
+
+/**
+ * Extract JSON from AI response
+ */
+function extractJSON(text: string): string {
+  // Try to find JSON in the response
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    return jsonMatch[0];
+  }
+  
+  // If no JSON found, assume the entire response is JSON
+  return text.trim();
+}
+
+/**
  * Create a streaming text response for real-time AI interactions
  */
-export function createStreamingResponse(prompt: string, options?: {
+export async function createStreamingResponse(prompt: string, options?: {
   temperature?: number;
 }) {
-  return streamText({
-    model: defaultModel,
-    prompt,
-    temperature: options?.temperature ?? 0.7,
+  const model = genAI.getGenerativeModel({ 
+    model: AI_MODELS.fast,
+    generationConfig: {
+      temperature: options?.temperature ?? 0.7,
+    }
   });
+  
+  return model.generateContentStream(prompt);
 }
 
 // Export commonly used schemas
@@ -172,6 +230,7 @@ export const ComparativeAnalysisSchema = z.object({
 });
 
 export const ForecastAnalysisSchema = z.object({
+  summary: z.string().describe("Executive summary of forecast predictions"),
   shortTermForecast: z.string().describe("1-2 year forecast"),
   mediumTermForecast: z.string().describe("3-5 year forecast"),
   longTermForecast: z.string().describe("5+ year forecast"),
@@ -201,6 +260,7 @@ export const InvestmentAnalysisSchema = z.object({
 });
 
 export const PersonalFinanceSchema = z.object({
+  overview: z.string().describe("Financial overview and current situation"),
   budgetingAdvice: z.string().describe("Budgeting strategies"),
   savingsRecommendations: z.string().describe("Savings recommendations"),
   investmentGuidance: z.string().describe("Investment guidance"),

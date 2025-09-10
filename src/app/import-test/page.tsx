@@ -1,10 +1,8 @@
 // Simple import test
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { generateText } from 'ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-console.log('AI SDK imports successful');
-console.log('createGoogleGenerativeAI:', typeof createGoogleGenerativeAI);
-console.log('generateText:', typeof generateText);
+console.log('Google AI SDK imports successful');
+console.log('GoogleGenerativeAI:', typeof GoogleGenerativeAI);
 
 export default function TestPage() {
   return <div>Import test successful</div>;
