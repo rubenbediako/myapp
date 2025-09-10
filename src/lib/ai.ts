@@ -53,6 +53,7 @@ export async function generateStructuredData<T>(
   }
 ): Promise<T> {
   try {
+    const defaultModel = getDefaultModel();
     const { object } = await generateObject({
       model: defaultModel,
       prompt,
@@ -73,6 +74,7 @@ export async function generateStructuredData<T>(
 export function createStreamingResponse(prompt: string, options?: {
   temperature?: number;
 }) {
+  const defaultModel = getDefaultModel();
   return streamText({
     model: defaultModel,
     prompt,

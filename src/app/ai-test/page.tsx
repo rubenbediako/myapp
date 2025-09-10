@@ -13,7 +13,7 @@ export default function AITestPage() {
       const data = await response.json();
       setResult({ endpoint, status: response.status, data });
     } catch (error) {
-      setResult({ endpoint, error: error.message });
+      setResult({ endpoint, error: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
       setLoading(false);
     }
