@@ -13,7 +13,7 @@ import {
   BookOpen,
   Trophy,
   Star,
-  Seal
+  Shield
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -209,7 +209,7 @@ export function CertificateGenerator({
           </div>
           
           <div className="text-center">
-            <Seal className="h-16 w-16 text-blue-600 mx-auto mb-2" />
+            <Shield className="h-16 w-16 text-blue-600 mx-auto mb-2" />
             <p className="text-xs text-gray-500">Official Seal</p>
           </div>
           

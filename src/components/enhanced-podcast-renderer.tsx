@@ -41,7 +41,8 @@ interface EnhancedPodcastRendererProps {
 export function EnhancedPodcastRenderer({ 
   text, 
   speaker, 
-  isCurrentSpeaking = false
+  isCurrentSpeaking = false,
+  currentWordIndex = 0
 }: EnhancedPodcastRendererProps) {
   const textRef = useRef<HTMLDivElement>(null);
 
@@ -98,46 +99,6 @@ export function EnhancedPodcastRenderer({
             });
         }
       });
-            const isStatistic = statisticRegex.test(word);
-            const isEconomicTerm = economicTermRegex.test(word);
-            
-            let className = 'inline-block transition-all duration-300';
-            
-            if (isCurrentWord) {
-              className += ' current-word bg-yellow-200 text-yellow-900 font-semibold px-1 rounded shadow-sm scale-105';
-            } else if (isStatistic) {
-              className += ' statistic-highlight font-semibold text-blue-700 bg-blue-50 px-1 rounded border-b-2 border-blue-300';
-            } else if (isEconomicTerm) {
-              className += ' economic-term font-medium text-green-700 bg-green-50 px-1 rounded';
-            } else if (isCurrentSpeaking) {
-              className += ' text-gray-600'; // Dim other words when speaking
-            }
-
-            elements.push(
-              <span 
-                key={`word-${partIndex}-${wordIdx}`} 
-                className={className}
-                data-word-index={globalWordIndex}
-              >
-                {word}
-              </span>
-            );
-            wordIndex++;
-          } else {
-            // Preserve whitespace
-            elements.push(
-              <span key={`space-${partIndex}-${wordIdx}`}>
-                {word}
-              </span>
-            );
-          }
-        });
-        
-        currentIndex += words.filter(w => w.trim()).length;
-      }
-    });
-
-    return elements;
   };
 
   // Function to render chart components based on type
@@ -247,6 +208,42 @@ export function EnhancedPodcastRenderer({
     );
   };
 
+  // Enhanced content renderer with word highlighting
+  const renderEnhancedContent = (inputText: string) => {
+    const words = inputText.split(' ');
+    
+    return words.map((word, index) => {
+      const isCurrentWord = index === currentWordIndex;
+      const isStatistic = /^\d+\.?\d*%?$/.test(word) || /^\$\d+\.?\d*\s*(?:billion|trillion|million|k|B|T)?$/i.test(word);
+      const economicTerms = ['GDP', 'inflation', 'unemployment', 'recession', 'growth', 'interest', 'monetary', 'fiscal'];
+      const isEconomicTerm = economicTerms.some(term => 
+        word.toLowerCase().includes(term.toLowerCase())
+      );
+      
+      let className = 'inline-block transition-all duration-300';
+      
+      if (isCurrentWord) {
+        className += ' current-word bg-yellow-200 text-yellow-900 font-semibold px-1 rounded shadow-sm scale-105';
+      } else if (isStatistic) {
+        className += ' statistic-highlight font-semibold text-blue-700 bg-blue-50 px-1 rounded border-b-2 border-blue-300';
+      } else if (isEconomicTerm) {
+        className += ' economic-term font-medium text-green-700 bg-green-50 px-1 rounded';
+      } else if (isCurrentSpeaking) {
+        className += ' text-gray-600';
+      }
+
+      return (
+        <span 
+          key={`word-${index}`} 
+          className={className}
+          data-word-index={index}
+        >
+          {word}{index < words.length - 1 ? ' ' : ''}
+        </span>
+      );
+    });
+  };
+
   // Function to detect mathematical formulas and economic models
   const containsMath = text.includes('$') || text.includes('equation') || text.includes('formula');
   const containsChart = text.includes('[CHART:') || text.includes('chart') || text.includes('graph');
@@ -287,7 +284,7 @@ export function EnhancedPodcastRenderer({
       {/* Enhanced content with word-level highlighting */}
       <div 
         ref={textRef}
-        className={`space-y-2 leading-relaxed text-base ${
+        className={`space-y-2 leading-relaxed text-base text-white ${
           isCurrentSpeaking ? 'reading-mode' : ''
         }`}
         style={{ lineHeight: '1.8' }}

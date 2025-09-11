@@ -41,32 +41,8 @@ export default function LandingPage() {
       label: 'Analysis',
       icon: TrendingUp,
       dropdown: [
-        { 
-          label: 'Core Economic Analysis', 
-          href: '/core-analysis',
-          dropdown: [
-            { label: 'Africa', href: '/core-analysis/africa' },
-            { label: 'Europe', href: '/core-analysis/europe' },
-            { label: 'Asia', href: '/core-analysis/asia' },
-            { label: 'Latin America', href: '/core-analysis/latin-america' },
-            { label: 'North America', href: '/core-analysis/north-america' },
-            { label: 'South America', href: '/core-analysis/south-america' }
-          ]
-        },
-        { 
-          label: 'Macroeconomic Variables', 
-          href: '/core-analysis/macroeconomics-variables',
-          dropdown: [
-            { label: 'GDP & Growth', href: '/macro/gdp-growth' },
-            { label: 'Inflation & Prices', href: '/macro/inflation' },
-            { label: 'Interest Rates', href: '/macro/interest-rates' },
-            { label: 'Exchange Rates', href: '/macro/exchange-rates' },
-            { label: 'Government Debt', href: '/macro/government-debt' },
-            { label: 'Trade Balance', href: '/macro/trade-balance' },
-            { label: 'Money Supply', href: '/macro/money-supply' },
-            { label: 'Fiscal Policy', href: '/macro/fiscal-policy' }
-          ]
-        },
+        { label: 'Core Economic Analysis', href: '/core-analysis' },
+        { label: 'Macroeconomic Variables', href: '/core-analysis/macroeconomics-variables' },
         { label: 'Employment & Unemployment', href: '/employment-unemployment' },
         { label: 'Capital Markets', href: '/capital-market' },
         { label: 'Consumption Analysis', href: '/consumption' },
@@ -191,12 +167,6 @@ export default function LandingPage() {
 
             {/* Desktop CTA */}
             <div className="hidden lg:flex items-center space-x-3">
-              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700" asChild>
-                <Link href="/demo" target="_blank">
-                  <Play className="w-4 h-4 mr-1" />
-                  Preview
-                </Link>
-              </Button>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/sign-in">Sign In</Link>
               </Button>
@@ -252,12 +222,6 @@ export default function LandingPage() {
                   </div>
                 ))}
                 <div className="pt-4 px-3 space-y-2">
-                  <Button variant="ghost" size="sm" className="w-full text-blue-600" asChild>
-                    <Link href="/demo" target="_blank">
-                      <Play className="w-4 h-4 mr-2" />
-                      Preview Demo
-                    </Link>
-                  </Button>
                   <Button variant="outline" size="sm" className="w-full" asChild>
                     <Link href="/sign-in">Sign In</Link>
                   </Button>
@@ -305,15 +269,6 @@ export default function LandingPage() {
                   <Link href="/ask-das-ai">
                     <MessageCircleQuestion className="w-5 h-5 mr-2" />
                     Ask Das-AI
-                  </Link>
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-center sm:justify-start">
-                <Button variant="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50" asChild>
-                  <Link href="/demo" target="_blank" className="flex items-center space-x-2">
-                    <Play className="w-4 h-4" />
-                    <span>Watch Preview Demo</span>
                   </Link>
                 </Button>
               </div>

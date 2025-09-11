@@ -770,12 +770,6 @@ export default function AskDasAiPage() {
                                             </div>
                                         )}
                                         
-                                        {!visualContent && !isGeneratingVisuals && audioUrl && (
-                                            <div className="text-center py-8 text-muted-foreground">
-                                                No educational content generated. Try asking a more specific academic question.
-                                            </div>
-                                        )}
-                                        
                                         {!visualContent && !isGeneratingVisuals && !audioUrl && (
                                             <div className="text-center py-8 text-muted-foreground">
                                                 Educational content will appear here after generating the podcast.
