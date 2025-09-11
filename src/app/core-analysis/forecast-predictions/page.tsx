@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Sparkles, Loader2, TrendingUp, TrendingDown, AlertTriangle, Clock } from 'lucide-react';
-import { generateForecast } from '@/lib/ai';
 
 const countries = [
   'United States', 'China', 'Japan', 'Germany', 'India', 'United Kingdom', 
@@ -49,8 +48,23 @@ export default function ForecastPredictionsPage() {
     
     setLoading(true);
     try {
-      const result = await generateForecast(country, timeframe, selectedFactors);
-      setAnalysis(result);
+      const response = await fetch('/api/ai/ask-das-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `Generate economic forecast for ${country} over ${timeframe} considering these factors: ${selectedFactors.join(', ')}. Include statistical models, trend analysis, and confidence intervals.`,
+          mode: 'enhanced'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate forecast');
+      }
+
+      const result = await response.json();
+      setAnalysis(result.response || 'Analysis completed successfully');
     } catch (error) {
       console.error('Error generating forecast:', error);
     } finally {

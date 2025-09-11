@@ -33,8 +33,6 @@ import { ThemeSwitcher } from './ui/theme-switcher';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/hooks/use-auth';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from './ui/scroll-area';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -172,7 +170,7 @@ const MobileNav = () => {
 }
 
 export function Dashboard({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const pathname = usePathname();
@@ -185,7 +183,7 @@ export function Dashboard({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      await logout();
       toast({ title: 'Signed Out', description: 'You have been signed out successfully.' });
       router.push('/sign-in');
     } catch (error: any) {

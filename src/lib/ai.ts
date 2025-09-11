@@ -1,59 +1,159 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 
-// Initialize Google AI
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
+// Initialize Google Gemini (Primary) - only on server side
+const genAI = typeof window === 'undefined' ? new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '') : null;
 
-// Available models
+// Initialize Anthropic Claude (Alternative) - only on server side
+const anthropic = typeof window === 'undefined' ? new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
+}) : null;
+
+// Available models - now supports Google Gemini and Anthropic Claude
 export const AI_MODELS = {
-  fast: 'gemini-1.5-flash',
-  pro: 'gemini-1.5-pro',
-  latest: 'gemini-1.5-flash'
+  // Google Gemini models
+  gemini_fast: 'gemini-1.5-flash',
+  gemini_pro: 'gemini-1.5-pro',
+  // Anthropic Claude models
+  claude_fast: 'claude-3-haiku-20240307',
+  claude_pro: 'claude-3-5-sonnet-20241022',
+  claude_opus: 'claude-3-opus-20240229'
 } as const;
 
 // Configuration for different AI tasks
 export const AI_CONFIG = {
   economicAnalysis: {
-    model: AI_MODELS.pro,
+    model: AI_MODELS.claude_fast, // Use Claude for analytical content
     temperature: 0.3,
     maxOutputTokens: 2000
   },
   podcastGeneration: {
-    model: AI_MODELS.fast,
+    model: AI_MODELS.claude_fast, // Use Claude Haiku (working model)
     temperature: 0.7,
     maxOutputTokens: 4000
   },
   dataProcessing: {
-    model: AI_MODELS.fast,
+    model: AI_MODELS.gemini_fast, // Use Gemini for quick processing
     temperature: 0.1,
     maxOutputTokens: 1000
+  },
+  multilingualAnalysis: {
+    model: AI_MODELS.gemini_pro, // Use Gemini Pro for multilingual tasks
+    temperature: 0.4,
+    maxOutputTokens: 3000
   }
 } as const;
 
 /**
- * Enhanced AI text generation with task-specific configuration
+ * Determine which AI provider to use based on the model
+ */
+function getProviderForModel(model: string): 'gemini' | 'claude' {
+  if (model.startsWith('gemini')) return 'gemini';
+  if (model.startsWith('claude')) return 'claude';
+  return 'claude'; // Default to Claude
+}
+
+/**
+ * AI text generation supporting multiple providers with automatic fallback
  */
 export async function generateAIText(
   prompt: string, 
   task: keyof typeof AI_CONFIG = 'economicAnalysis',
-  options?: { temperature?: number; maxOutputTokens?: number }
+  options?: { temperature?: number; maxTokens?: number }
+) {
+  const config = AI_CONFIG[task];
+  const provider = getProviderForModel(config.model);
+  
+  try {
+    return await attemptGeneration(provider, config, prompt, options);
+  } catch (error) {
+    console.warn(`Primary provider ${provider} failed, attempting fallback to Claude...`);
+    
+    // Fallback to Claude if primary provider fails
+    if (provider !== 'claude') {
+      try {
+        const fallbackConfig = {
+          model: AI_MODELS.claude_fast,
+          temperature: config.temperature,
+          maxOutputTokens: config.maxOutputTokens
+        };
+        return await attemptGeneration('claude', fallbackConfig, prompt, options);
+      } catch (fallbackError) {
+        console.error('Fallback to Claude also failed:', fallbackError);
+        throw error; // Throw the original error
+      }
+    }
+    
+    throw error; // Re-throw if Claude was the primary provider
+  }
+}
+
+/**
+ * Attempt text generation with a specific provider
+ */
+async function attemptGeneration(
+  provider: 'gemini' | 'claude',
+  config: { model: string; temperature: number; maxOutputTokens: number },
+  prompt: string,
+  options?: { temperature?: number; maxTokens?: number }
 ) {
   try {
-    const config = AI_CONFIG[task];
-    const model = genAI.getGenerativeModel({ 
-      model: config.model,
-      generationConfig: {
-        temperature: options?.temperature ?? config.temperature,
-        maxOutputTokens: options?.maxOutputTokens ?? config.maxOutputTokens,
+    if (typeof window !== 'undefined') {
+      throw new Error('AI functions can only be called on the server side');
+    }
+
+    if (provider === 'claude') {
+      if (!anthropic) {
+        throw new Error('Anthropic client not available');
       }
-    });
-    
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+      // Use Anthropic Claude
+      const response = await anthropic.messages.create({
+        model: config.model,
+        max_tokens: options?.maxTokens ?? config.maxOutputTokens,
+        temperature: options?.temperature ?? config.temperature,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      });
+      
+      return response.content[0].type === 'text' ? response.content[0].text : '';
+    } else {
+      if (!genAI) {
+        throw new Error('Google AI client not available');
+      }
+      // Use Google Gemini
+      const model = genAI.getGenerativeModel({ 
+        model: config.model,
+        generationConfig: {
+          temperature: options?.temperature ?? config.temperature,
+          maxOutputTokens: options?.maxTokens ?? config.maxOutputTokens,
+        }
+      });
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    }
   } catch (error) {
-    console.error('Error generating AI text:', error);
-    throw new Error('Failed to generate AI text');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`${provider} failed:`, errorMessage);
+    
+    // Provide more helpful error messages for common issues
+    const providerName = provider === 'claude' ? 'Anthropic Claude' : 'Google Gemini';
+    
+    if (errorMessage.includes('quota') || errorMessage.includes('429')) {
+      throw new Error(`${providerName} API quota exceeded. Please try again later or check your billing plan.`);
+    } else if (errorMessage.includes('503') || errorMessage.includes('overloaded')) {
+      throw new Error(`${providerName} service is temporarily overloaded. Please try again in a few minutes.`);
+    } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+      throw new Error(`${providerName} API key is invalid or unauthorized.`);
+    } else {
+      throw new Error(`Failed to generate AI text with ${providerName}: ${errorMessage}`);
+    }
   }
 }
 
@@ -65,29 +165,39 @@ export async function generateStructuredData<T>(
   schema: z.ZodSchema<T>,
   options?: {
     temperature?: number;
+    task?: keyof typeof AI_CONFIG;
   }
 ): Promise<T> {
   try {
-    const model = genAI.getGenerativeModel({ 
-      model: AI_MODELS.fast,
-      generationConfig: {
-        temperature: options?.temperature ?? 0.7,
-        maxOutputTokens: 2000,
-      }
-    });
-    
-    // Create a detailed prompt that explains the expected JSON structure
     const schemaDescription = generateSchemaDescription(schema);
     const enhancedPrompt = `${prompt}
 
-Please respond with a valid JSON object that matches this structure:
+IMPORTANT: Respond with ONLY valid JSON matching this exact structure:
 ${schemaDescription}
 
-Return only the JSON object, no additional text or formatting.`;
+Requirements:
+- Return ONLY the JSON object, no additional text, explanations, or markdown
+- Ensure all strings are properly escaped
+- Do not include any text before or after the JSON`;
 
-    const result = await model.generateContent(enhancedPrompt);
-    const response = await result.response;
-    const text = response.text();
+    // Use configuration based on task type
+    const task = options?.task ?? 'podcastGeneration';
+    const config = AI_CONFIG[task];
+
+    // Use Claude for structured data generation
+    const response = await anthropic.messages.create({
+      model: config.model,
+      max_tokens: config.maxOutputTokens,
+      temperature: options?.temperature ?? config.temperature,
+      messages: [
+        {
+          role: 'user',
+          content: enhancedPrompt
+        }
+      ]
+    });
+    
+    const text = response.content[0].type === 'text' ? response.content[0].text : '';
     
     // Clean the response to extract JSON
     const jsonText = extractJSON(text);
@@ -96,8 +206,19 @@ Return only the JSON object, no additional text or formatting.`;
     // Validate with Zod schema
     return schema.parse(parsedData);
   } catch (error) {
-    console.error('Error generating structured data:', error);
-    throw new Error('Failed to generate structured data');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to generate structured data with Claude:', errorMessage);
+    
+    // Provide more helpful error messages for common issues
+    if (errorMessage.includes('quota') || errorMessage.includes('429')) {
+      throw new Error('Anthropic Claude API quota exceeded. Please try again later or check your billing plan.');
+    } else if (errorMessage.includes('503') || errorMessage.includes('overloaded')) {
+      throw new Error('Anthropic Claude service is temporarily overloaded. Please try again in a few minutes.');
+    } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+      throw new Error('Anthropic Claude API key is invalid or unauthorized.');
+    } else {
+      throw new Error(`Failed to generate structured data: ${errorMessage}`);
+    }
   }
 }
 
@@ -142,53 +263,115 @@ function extractJSON(text: string): string {
     // Remove any markdown code blocks
     let cleanText = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
     
-    // Try to find JSON object or array in the response
-    const jsonMatch = cleanText.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-    if (jsonMatch) {
-      return jsonMatch[0];
+    // Remove any leading/trailing whitespace and text
+    cleanText = cleanText.trim();
+    
+    // Find the first { and last } to extract the main JSON object
+    const startIndex = cleanText.indexOf('{');
+    const lastIndex = cleanText.lastIndexOf('}');
+    
+    if (startIndex !== -1 && lastIndex !== -1 && lastIndex > startIndex) {
+      let jsonStr = cleanText.substring(startIndex, lastIndex + 1);
+      
+      // Try to fix common JSON issues
+      try {
+        JSON.parse(jsonStr);
+        return jsonStr;
+      } catch (firstError) {
+        // Try to fix escaped characters
+        jsonStr = jsonStr
+          .replace(/\\(?!["\\/bfnrt])/g, '\\\\')     // Fix unescaped backslashes
+          .replace(/\n/g, '\\n')                      // Escape newlines
+          .replace(/\r/g, '\\r')                      // Escape carriage returns
+          .replace(/\t/g, '\\t');                     // Escape tabs
+        
+        JSON.parse(jsonStr);
+        return jsonStr;
+      }
     }
     
-    // If no JSON found, try to parse the entire response
-    cleanText = cleanText.trim();
-    if (cleanText.startsWith('{') || cleanText.startsWith('[')) {
+    // Fallback: try to find JSON object or array in the response
+    const jsonMatch = cleanText.match(/(\{[\s\S]*\})/);
+    if (jsonMatch) {
+      let matchStr = jsonMatch[0];
+      
+      try {
+        JSON.parse(matchStr);
+        return matchStr;
+      } catch (matchError) {
+        // Try to fix escaped characters in the match
+        matchStr = matchStr
+          .replace(/\\(?!["\\/bfnrt])/g, '\\\\')
+          .replace(/\n/g, '\\n')
+          .replace(/\r/g, '\\r')
+          .replace(/\t/g, '\\t');
+        
+        JSON.parse(matchStr);
+        return matchStr;
+      }
+    }
+    
+    // If no JSON found but starts with {, try parsing as-is
+    if (cleanText.startsWith('{') && cleanText.endsWith('}')) {
+      JSON.parse(cleanText);
       return cleanText;
     }
     
-    // Last resort: wrap in object
-    return `{"result": ${JSON.stringify(cleanText)}}`;
-  } catch (error) {
-    console.error('Error extracting JSON:', error);
-    return `{"error": "Failed to parse response", "originalText": ${JSON.stringify(text)}}`;
+    // Last resort: return error object
+    throw new Error('No valid JSON found in response');
+  } catch (parseError) {
+    console.error('Error extracting JSON:', parseError);
+    console.error('Original text:', text.substring(0, 500));
+    throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
   }
 }
 
 /**
- * Create a streaming text response for real-time AI interactions
+ * Create a streaming text response for real-time AI interactions using Google Gemini
  */
 export async function createStreamingResponse(prompt: string, options?: {
   temperature?: number;
 }) {
-  const model = genAI.getGenerativeModel({ 
-    model: AI_MODELS.fast,
-    generationConfig: {
-      temperature: options?.temperature ?? 0.7,
-    }
-  });
-  
   try {
-    const result = await model.generateContentStream(prompt);
+    if (typeof window !== 'undefined') {
+      throw new Error('AI functions can only be called on the server side');
+    }
     
-    // Create a ReadableStream that yields the streaming content
-    const stream = new ReadableStream({
-      async start(controller) {
+    if (!genAI) {
+      throw new Error('Google AI client not available');
+    }
+    
+    const model = genAI.getGenerativeModel({ 
+      model: AI_MODELS.gemini_fast,
+      generationConfig: {
+        temperature: options?.temperature ?? 0.7,
+      }
+    });
+    
+    // For Google Gemini, we'll simulate streaming by generating the full response
+    // and then streaming it chunk by chunk
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    // Create a ReadableStream that yields the content in chunks
+    const readableStream = new ReadableStream({
+      start(controller) {
         try {
-          for await (const chunk of result.stream) {
-            const chunkText = chunk.text();
-            if (chunkText) {
-              controller.enqueue(new TextEncoder().encode(chunkText));
+          const chunks = text.match(/.{1,50}/g) || [text]; // Split into ~50 char chunks
+          let index = 0;
+          
+          const sendNextChunk = () => {
+            if (index < chunks.length) {
+              controller.enqueue(new TextEncoder().encode(chunks[index]));
+              index++;
+              setTimeout(sendNextChunk, 50); // Small delay between chunks
+            } else {
+              controller.close();
             }
-          }
-          controller.close();
+          };
+          
+          sendNextChunk();
         } catch (error) {
           console.error('Streaming error:', error);
           controller.error(error);
@@ -196,7 +379,7 @@ export async function createStreamingResponse(prompt: string, options?: {
       },
     });
 
-    return new Response(stream, {
+    return new Response(readableStream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
@@ -394,18 +577,18 @@ export async function analyzePersonalFinance(country: string, income: string, ex
   });
 }
 
-export async function analyzeEmployment(country: string) {
+export async function analyzeEmployment(country: string): Promise<string> {
   const prompt = `Analyze the employment and unemployment situation in ${country}.
   Include job market trends, sector analysis, skills demand, and recommendations for job seekers and policymakers.`;
   
-  return generateAIText(prompt, 'economicAnalysis');
+  return await generateAIText(prompt, 'economicAnalysis');
 }
 
-export async function analyzeSavings(country: string) {
+export async function analyzeSavings(country: string): Promise<string> {
   const prompt = `Analyze savings patterns and recommendations for ${country}.
   Include savings rates, investment options, government policies, and strategies for different income levels.`;
   
-  return generateAIText(prompt, 'economicAnalysis');
+  return await generateAIText(prompt, 'economicAnalysis');
 }
 
 export async function analyzeWages(country: string) {
@@ -428,3 +611,21 @@ export async function analyzePricing(country: string, sector: string) {
   
   return generateAIText(prompt, 'economicAnalysis');
 }
+
+/**
+ * AI Provider Library - Streamlined Setup
+ * 
+ * This library has been optimized to use only the two most reliable providers:
+ * - Google Gemini: Fast, reliable, and cost-effective for general text generation
+ * - Anthropic Claude: Premium reasoning and structured data generation
+ * 
+ * Removed providers:
+ * - Mistral AI: Authentication issues, removed to reduce complexity
+ * - Cohere: Authentication issues, removed to reduce complexity
+ * 
+ * Features:
+ * - Automatic fallback from Gemini to Claude on failures
+ * - Structured data generation with Zod schema validation
+ * - Comprehensive error handling and user-friendly messages
+ * - Support for different task types (economic analysis, podcast generation, etc.)
+ */

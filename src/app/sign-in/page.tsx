@@ -3,8 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { signIn, signInWithGoogle } from '@/lib/auth';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,35 +39,13 @@ export default function SignInPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signIn(email, password);
       toast({ title: 'Success', description: 'Signed in successfully.' });
       router.push('/dashboard');
     } catch (error: any) {
-      let errorMessage = 'An error occurred during sign in.';
-      
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'No account found with this email address.';
-          break;
-        case 'auth/wrong-password':
-          errorMessage = 'Incorrect password.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Invalid email address.';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'This account has been disabled.';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Too many failed attempts. Please try again later.';
-          break;
-        default:
-          errorMessage = error.message;
-      }
-      
       toast({
         title: 'Sign In Error',
-        description: errorMessage,
+        description: error.message,
         variant: 'destructive',
       });
     } finally {
@@ -79,26 +56,13 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-        await signInWithPopup(auth, googleProvider);
+        await signInWithGoogle();
         toast({ title: 'Success', description: 'Signed in successfully with Google.' });
         router.push('/dashboard');
     } catch (error: any) {
-        let errorMessage = 'An error occurred during Google sign in.';
-        
-        switch (error.code) {
-          case 'auth/popup-closed-by-user':
-            errorMessage = 'Sign in was cancelled.';
-            break;
-          case 'auth/popup-blocked':
-            errorMessage = 'Pop-up was blocked by your browser.';
-            break;
-          default:
-            errorMessage = error.message;
-        }
-        
         toast({
             title: 'Google Sign In Error',
-            description: errorMessage,
+            description: error.message,
             variant: 'destructive',
         });
     } finally {
@@ -118,22 +82,9 @@ export default function SignInPage() {
       setShowResetForm(false);
       setResetEmail('');
     } catch (error: any) {
-      let errorMessage = 'An error occurred while sending reset email.';
-      
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'No account found with this email address.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Invalid email address.';
-          break;
-        default:
-          errorMessage = error.message;
-      }
-      
       toast({
         title: 'Password Reset Error',
-        description: errorMessage,
+        description: error.message,
         variant: 'destructive',
       });
     } finally {

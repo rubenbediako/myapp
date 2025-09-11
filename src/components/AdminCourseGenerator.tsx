@@ -1,4 +1,5 @@
-import { httpsCallable, getFunctions } from "firebase/functions";
+// Firebase functions removed - this component is disabled
+// import { httpsCallable, getFunctions } from "firebase/functions";
 import { useState } from "react";
 
 const SUBJECTS = [
@@ -15,9 +16,11 @@ const LEVELS = [100, 200, 300, 400, "grad"] as const;
 type SubjectKey = typeof SUBJECTS[number]["key"];
 
 async function callGen(fnName: string, payload: any) {
-  const functions = getFunctions();
-  const fn = httpsCallable(functions, fnName);
-  return fn(payload).then((r: any) => r.data);
+  // Firebase functions removed
+  throw new Error("Firebase functions not available");
+  // const functions = getFunctions();
+  // const fn = httpsCallable(functions, fnName);
+  // return fn(payload).then((r: any) => r.data);
 }
 
 export default function AdminCourseGenerator() {
@@ -48,7 +51,7 @@ export default function AdminCourseGenerator() {
 
   return (
     <div style={{ maxWidth: 560 }}>
-      <h2>Course Generator (Gemini + TTS)</h2>
+      <h2>Course Generator (Gemini + ElevenLabs)</h2>
       <label>Subject: </label>
       <select value={subject} onChange={(e) => setSubject(e.target.value as SubjectKey)}>
         {SUBJECTS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}

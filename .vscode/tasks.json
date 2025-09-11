@@ -1,14 +1,201 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "dev-server",
-			"type": "shell",
-			"command": "npm",
-			"args": ["run", "dev"],
-			"group": "build",
-			"isBackground": true,
-			"problemMatcher": []
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev-server",
+      "type": "shell",
+      "command": "npm run dev",
+      "group": "build",
+      "isBackground": true,
+      "explanation": "Starting development server in background",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "npm run build",
+      "group": "test",
+      "isBackground": false,
+      "explanation": "Building project",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "lint",
+      "type": "shell",
+      "command": "npm run lint",
+      "group": "test",
+      "isBackground": false,
+      "explanation": "Linting code",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "typecheck",
+      "type": "shell",
+      "command": "npm run typecheck",
+      "group": "test",
+      "isBackground": false,
+      "explanation": "Running package manager command",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "npm test",
+      "group": "test",
+      "isBackground": false,
+      "explanation": "Running tests",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "git-status",
+      "type": "shell",
+      "command": "git status",
+      "group": "test",
+      "isBackground": false,
+      "explanation": "Executing git command",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "git-add-all",
+      "type": "shell",
+      "command": "git add .",
+      "group": "test",
+      "isBackground": false,
+      "explanation": "Executing git command",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "git-commit",
+      "type": "shell",
+      "command": "git commit -m 'Auto commit'",
+      "group": "test",
+      "isBackground": false,
+      "explanation": "Executing git command",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "git-push",
+      "type": "shell",
+      "command": "git push",
+      "group": "test",
+      "isBackground": false,
+      "explanation": "Executing git command",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    }
+  ]
 }

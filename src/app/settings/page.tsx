@@ -18,21 +18,17 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function SettingsPage() {
-  const { user, logout, sendEmailVerification, updateUserProfile, updateUserPassword } = useAuth();
+  const { user, logout, sendEmailVerification, updateUserProfile } = useAuth();
   const [displayName, setDisplayName] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [verificationLoading, setVerificationLoading] = useState(false);
-  const [passwordLoading, setPasswordLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
   const { fontSize, setFontSize, fontFace, setFontFace } = useTextSettings();
 
   useEffect(() => {
-    if (user?.displayName) {
-      setDisplayName(user.displayName);
+    if (user?.name) {
+      setDisplayName(user.name);
     }
   }, [user]);
 
@@ -69,48 +65,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordLoading(true);
-    
-    try {
-      if (newPassword !== confirmPassword) {
-        throw new Error('New passwords do not match');
-      }
-      
-      if (newPassword.length < 6) {
-        throw new Error('Password must be at least 6 characters long');
-      }
-      
-      await updateUserPassword(currentPassword, newPassword);
-      toast({ title: 'Success', description: 'Password updated successfully.' });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (error: any) {
-      let errorMessage = error.message;
-      
-      switch (error.code) {
-        case 'auth/wrong-password':
-          errorMessage = 'Current password is incorrect.';
-          break;
-        case 'auth/weak-password':
-          errorMessage = 'New password is too weak.';
-          break;
-        case 'auth/requires-recent-login':
-          errorMessage = 'Please sign out and sign back in before changing your password.';
-          break;
-      }
-      
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
+  // Password update functionality removed - not supported in custom auth system
 
   const handleLogout = async () => {
     try {
@@ -134,7 +89,8 @@ export default function SettingsPage() {
     );
   }
 
-  const isGoogleUser = user.providerData.some(provider => provider.providerId === 'google.com');
+  // Simplified auth system - all users are treated the same
+  const isGoogleUser = false;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -261,58 +217,8 @@ export default function SettingsPage() {
           </Card>
         )}
 
-        {/* Password Change - Only for email/password users */}
-        {!isGoogleUser && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Change Password
-              </CardTitle>
-              <CardDescription>Update your password to keep your account secure.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
-                  <Input
-                    id="currentPassword"
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <Input
-                    id="newPassword"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <Button type="submit" disabled={passwordLoading}>
-                  {passwordLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Update Password
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
+        {/* Password Change - Disabled for simplified auth system */}
+        {/* Password update functionality has been removed */}
 
         {/* Account Actions */}
         <Card>

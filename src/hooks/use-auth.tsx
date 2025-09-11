@@ -3,17 +3,13 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
-  onAuthStateChanged, 
   User,
-  signOut,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  updateProfile,
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+  getCurrentUser,
+  signOut as authSignOut,
+  sendEmailVerification as authSendEmailVerification,
+  sendPasswordReset as authSendPasswordReset,
+  updateProfile as authUpdateProfile,
+} from '@/lib/auth';
 import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
@@ -22,8 +18,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   sendEmailVerification: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
-  updateUserProfile: (displayName: string, photoURL?: string) => Promise<void>;
-  updateUserPassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  updateUserProfile: (name: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -33,7 +28,6 @@ const AuthContext = createContext<AuthContextType>({
   sendEmailVerification: async () => {},
   sendPasswordReset: async () => {},
   updateUserProfile: async () => {},
-  updateUserPassword: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -41,17 +35,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    // Check for existing user on mount
+    try {
+      const currentUser = getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      console.warn('Error getting current user:', error);
+      setUser(null);
+    } finally {
       setLoading(false);
-    });
+    }
 
-    return () => unsubscribe();
+    // Set up periodic check for auth state changes (cookie changes)
+    const interval = setInterval(() => {
+      try {
+        const updatedUser = getCurrentUser();
+        setUser(updatedUser);
+      } catch (error) {
+        console.warn('Error updating auth state:', error);
+      }
+    }, 1000); // Check every second
+
+    return () => clearInterval(interval);
   }, []);
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      await authSignOut();
+      setUser(null);
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -61,7 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const sendEmailVerificationToUser = async () => {
     if (!user) throw new Error('No user logged in');
     try {
-      await sendEmailVerification(user);
+      await authSendEmailVerification(user);
     } catch (error) {
       console.error('Error sending email verification:', error);
       throw error;
@@ -70,36 +81,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const sendPasswordReset = async (email: string) => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      await authSendPasswordReset(email);
     } catch (error) {
       console.error('Error sending password reset:', error);
       throw error;
     }
   };
 
-  const updateUserProfile = async (displayName: string, photoURL?: string) => {
+  const updateUserProfile = async (name: string) => {
     if (!user) throw new Error('No user logged in');
     try {
-      await updateProfile(user, { displayName, photoURL });
-      // Trigger a re-render by updating the user state
-      setUser({ ...user });
+      const updatedUser = await authUpdateProfile(user, { name });
+      setUser(updatedUser);
     } catch (error) {
       console.error('Error updating profile:', error);
-      throw error;
-    }
-  };
-
-  const updateUserPassword = async (currentPassword: string, newPassword: string) => {
-    if (!user || !user.email) throw new Error('No user logged in');
-    try {
-      // Re-authenticate user before password change
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-      
-      // Update password
-      await updatePassword(user, newPassword);
-    } catch (error) {
-      console.error('Error updating password:', error);
       throw error;
     }
   };
@@ -120,7 +115,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       sendEmailVerification: sendEmailVerificationToUser,
       sendPasswordReset,
       updateUserProfile,
-      updateUserPassword
     }}>
       {children}
     </AuthContext.Provider>

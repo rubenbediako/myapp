@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -144,4 +143,106 @@
   .font-lato {
     font-family: 'Lato', sans-serif;
   }
+}
+
+/* Enhanced Podcast Text Highlighting */
+.reading-mode {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  letter-spacing: 0.01em;
+}
+
+.current-word {
+  animation: highlight-pulse 0.8s ease-in-out;
+  transform-origin: center;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+@keyframes highlight-pulse {
+  0% {
+    background-color: rgb(254, 240, 138);
+    transform: scale(1);
+  }
+  50% {
+    background-color: rgb(254, 215, 170);
+    transform: scale(1.05);
+  }
+  100% {
+    background-color: rgb(254, 240, 138);
+    transform: scale(1);
+  }
+}
+
+.statistic-highlight {
+  border-left: 3px solid rgb(59, 130, 246);
+  transition: all 0.3s ease;
+}
+
+.statistic-highlight:hover {
+  background-color: rgb(147, 197, 253);
+  transform: translateX(2px);
+}
+
+.economic-term {
+  border-bottom: 2px dotted rgb(34, 197, 94);
+  transition: all 0.3s ease;
+}
+
+.economic-term:hover {
+  background-color: rgb(187, 247, 208);
+  border-bottom-style: solid;
+}
+
+/* Mathematical content highlighting */
+.katex {
+  font-size: 1.05em;
+}
+
+.katex-display {
+  margin: 1em 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgb(239, 246, 255) 0%, rgb(219, 234, 254) 100%);
+  border-radius: 0.5rem;
+  border-left: 4px solid rgb(59, 130, 246);
+}
+
+/* Enhanced chart containers */
+.recharts-wrapper {
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background: linear-gradient(135deg, rgb(249, 250, 251) 0%, rgb(243, 244, 246) 100%);
+}
+
+/* Progress indicator enhancement */
+.progress-bar {
+  background: linear-gradient(90deg, rgb(34, 197, 94) 0%, rgb(59, 130, 246) 100%);
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Speaker identification enhancement */
+.speaker-rita {
+  border-left: 4px solid rgb(6, 182, 212);
+}
+
+.speaker-das {
+  border-left: 4px solid rgb(34, 197, 94);
+}
+
+/* Focus and accessibility improvements */
+.podcast-content:focus {
+  outline: 2px solid rgb(59, 130, 246);
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling for highlighted content */
+html {
+  scroll-behavior: smooth;
+}
+
+.current-word:focus {
+  outline: 2px solid rgb(251, 191, 36);
+  outline-offset: 2px;
 }

@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, GitCompare, Loader2, TrendingUp, TrendingDown, CheckCircle, XCircle } from 'lucide-react';
-import { compareCountries } from '@/lib/ai';
 
 const countries = [
   'United States', 'China', 'Japan', 'Germany', 'India', 'United Kingdom', 
@@ -34,8 +33,23 @@ export default function ComparativeAnalysisPage() {
     
     setLoading(true);
     try {
-      const result = await compareCountries(country1, country2, indicator);
-      setAnalysis(result);
+      const response = await fetch('/api/ai/ask-das-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `Compare ${indicator} between ${country1} and ${country2}. Provide detailed analysis with current data, historical trends, and key differences in economic performance.`,
+          mode: 'enhanced'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to compare countries');
+      }
+
+      const result = await response.json();
+      setAnalysis(result.response || 'Analysis completed successfully');
     } catch (error) {
       console.error('Error comparing countries:', error);
     } finally {

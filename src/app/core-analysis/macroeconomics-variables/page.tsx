@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Loader2, ArrowLeft, TrendingUp, BarChart3, PieChart } from 'lucide-react';
-import { analyzeMacroeconomics } from '@/lib/ai';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
@@ -48,8 +47,23 @@ export default function MacroeconomicsVariablesPage() {
     
     setLoading(true);
     try {
-      const result = await analyzeMacroeconomics(country, selectedIndicators);
-      setAnalysis(result);
+      const response = await fetch('/api/ai/ask-das-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `Analyze macroeconomic indicators for ${country}: ${selectedIndicators.join(', ')}. Include current values, historical trends, international comparisons, and policy implications.`,
+          mode: 'enhanced'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze macroeconomics');
+      }
+
+      const result = await response.json();
+      setAnalysis(result.response || 'Analysis completed successfully');
     } catch (error) {
       console.error('Error analyzing macroeconomics:', error);
     } finally {

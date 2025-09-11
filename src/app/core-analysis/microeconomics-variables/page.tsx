@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Building2, Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { analyzeMicroeconomics } from '@/lib/ai';
 
 const countries = [
   'United States', 'China', 'Japan', 'Germany', 'India', 'United Kingdom', 
@@ -34,8 +33,23 @@ export default function MicroeconomicsVariablesPage() {
     
     setLoading(true);
     try {
-      const result = await analyzeMicroeconomics(country, sector);
-      setAnalysis(result);
+      const response = await fetch('/api/ai/ask-das-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `Analyze microeconomic factors for the ${sector} sector in ${country}. Include market structure, competition analysis, supply and demand dynamics, and business environment factors.`,
+          mode: 'enhanced'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze microeconomics');
+      }
+
+      const result = await response.json();
+      setAnalysis(result.response || 'Analysis completed successfully');
     } catch (error) {
       console.error('Error analyzing microeconomics:', error);
     } finally {

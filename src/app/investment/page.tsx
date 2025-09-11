@@ -1,263 +1,312 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UniversalPodcastPlayer } from '@/components/universal-podcast-player';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, TrendingUp, Loader2, Target, AlertTriangle, Clock, DollarSign } from 'lucide-react';
-import { analyzeInvestment } from '@/lib/ai';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, DollarSign, PieChart as PieChartIcon, Activity } from 'lucide-react';
 
-const countries = [
-  'United States', 'China', 'Japan', 'Germany', 'India', 'United Kingdom', 
-  'France', 'Italy', 'Brazil', 'Canada', 'Russia', 'South Korea', 
-  'Australia', 'Spain', 'Mexico', 'Indonesia', 'Netherlands', 'Saudi Arabia',
-  'Turkey', 'Taiwan', 'Belgium', 'Argentina', 'Thailand', 'Ireland'
+// Sample investment data
+const portfolioData = [
+  { name: 'Stocks', value: 45, amount: 45000 },
+  { name: 'Bonds', value: 25, amount: 25000 },
+  { name: 'Real Estate', value: 20, amount: 20000 },
+  { name: 'Commodities', value: 10, amount: 10000 },
 ];
 
-const investmentTypes = [
-  'Stocks & Equities', 'Government Bonds', 'Corporate Bonds', 'Real Estate',
-  'Technology Sector', 'Healthcare Sector', 'Energy Sector', 'Financial Services',
-  'Commodities', 'Foreign Exchange', 'Emerging Markets', 'Infrastructure',
-  'Green Energy', 'Cryptocurrency', 'Private Equity', 'Mutual Funds'
+const performanceData = [
+  { month: 'Jan', portfolio: 95000, sp500: 92000 },
+  { month: 'Feb', portfolio: 97000, sp500: 94000 },
+  { month: 'Mar', portfolio: 100000, sp500: 96000 },
+  { month: 'Apr', portfolio: 98000, sp500: 95000 },
+  { month: 'May', portfolio: 102000, sp500: 98000 },
+  { month: 'Jun', portfolio: 105000, sp500: 100000 },
 ];
 
-export default function InvestmentPage() {
-  const [country, setCountry] = useState('');
-  const [investmentType, setInvestmentType] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<any>(null);
+const sectorsData = [
+  { sector: 'Technology', allocation: 30, performance: 12.5 },
+  { sector: 'Healthcare', allocation: 20, performance: 8.3 },
+  { sector: 'Financials', allocation: 15, performance: 6.2 },
+  { sector: 'Consumer Goods', allocation: 15, performance: 4.8 },
+  { sector: 'Energy', allocation: 10, performance: -2.1 },
+  { sector: 'Utilities', allocation: 10, performance: 3.5 },
+];
 
-  const handleAnalyze = async () => {
-    if (!country || !investmentType) return;
-    
-    setLoading(true);
-    try {
-      const result = await analyzeInvestment(country, investmentType);
-      setAnalysis(result);
-    } catch (error) {
-      console.error('Error analyzing investment:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
-  const getRiskColor = (riskLevel: string) => {
-    switch (riskLevel.toLowerCase()) {
-      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-    }
-  };
+export default function InvestmentAnalysis() {
+  const [selectedTopic, setSelectedTopic] = useState<string>('');
 
-  const getRiskIcon = (riskLevel: string) => {
-    switch (riskLevel.toLowerCase()) {
-      case 'low': return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'medium': return <Target className="h-4 w-4 text-yellow-600" />;
-      case 'high': return <AlertTriangle className="h-4 w-4 text-red-600" />;
-      default: return <Target className="h-4 w-4" />;
+  const investmentTopics = [
+    {
+      title: 'Portfolio Diversification Strategies',
+      description: 'Learn about risk reduction through asset allocation',
+      query: 'Explain portfolio diversification strategies with real examples and mathematical risk calculations including correlation coefficients and Sharpe ratios'
+    },
+    {
+      title: 'Compound Interest and Time Value of Money',
+      description: 'Understanding exponential growth in investments',
+      query: 'Explain compound interest and time value of money with real calculations, formulas like PV=FV/(1+r)^n, and examples from historical market data'
+    },
+    {
+      title: 'Risk Assessment and Modern Portfolio Theory',
+      description: 'Mathematical approaches to investment risk',
+      query: 'Explain Modern Portfolio Theory, efficient frontier calculations, and risk assessment methods with real statistical data and mathematical formulas'
+    },
+    {
+      title: 'Market Analysis and Technical Indicators',
+      description: 'Understanding market trends and analysis tools',
+      query: 'Explain technical analysis indicators like moving averages, RSI, MACD with real market examples and mathematical calculations behind these indicators'
+    },
+    {
+      title: 'Real Estate Investment Analysis',
+      description: 'Property investment evaluation methods',
+      query: 'Explain real estate investment analysis including cap rates, cash-on-cash returns, NPV calculations with real property market data and examples'
+    },
+    {
+      title: 'Cryptocurrency and Alternative Investments',
+      description: 'Understanding digital assets and alternatives',
+      query: 'Explain cryptocurrency investment principles, blockchain technology, and alternative investments with real market data, volatility statistics, and risk factors'
     }
-  };
+  ];
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Investment Analysis</h1>
-            <p className="text-muted-foreground mt-1">
-              AI-powered investment analysis and market opportunity assessment
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
-
-        {/* Input Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Investment Configuration
-            </CardTitle>
-            <CardDescription>
-              Select a country and investment type for AI-powered market analysis
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="country">Target Market</Label>
-                <Select value={country} onValueChange={setCountry}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="investmentType">Investment Type</Label>
-                <Select value={investmentType} onValueChange={setInvestmentType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select investment type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {investmentTypes.map(type => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <Button 
-              onClick={handleAnalyze}
-              disabled={!country || !investmentType || loading}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing Investment Opportunities...
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Analyze Investment
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Analysis Results */}
-        {analysis && (
-          <div className="space-y-6">
-            {/* Market Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Market Overview</CardTitle>
-                <CardDescription>Current investment market conditions and outlook</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed">{analysis.marketOverview}</p>
-              </CardContent>
-            </Card>
-
-            {/* Investment Opportunities */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-green-500" />
-                  Investment Opportunities
-                </CardTitle>
-                <CardDescription>Key sectors and opportunities identified by AI analysis</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {analysis.opportunities?.map((opportunity: any, index: number) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold">{opportunity.sector}</h4>
-                        <div className="flex items-center gap-2">
-                          {getRiskIcon(opportunity.riskLevel)}
-                          <Badge className={getRiskColor(opportunity.riskLevel)}>
-                            {opportunity.riskLevel} Risk
-                          </Badge>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{opportunity.description}</p>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-4 w-4 text-green-600" />
-                          <span className="text-sm font-medium">Expected Return: {opportunity.expectedReturn}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Risks & Timeline */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-red-500" />
-                    Investment Risks
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {analysis.risks?.map((risk: string, index: number) => (
-                      <div key={index} className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
-                        <Badge variant="secondary" className="mt-0.5">{index + 1}</Badge>
-                        <span className="text-sm">{risk}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-blue-500" />
-                    Investment Timeline
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm leading-relaxed">{analysis.timeline}</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Diversification Strategy */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Diversification Strategy</CardTitle>
-                <CardDescription>AI-recommended portfolio diversification approach</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed">{analysis.diversificationStrategy}</p>
-              </CardContent>
-            </Card>
-
-            {/* Recommendations */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Investment Recommendations</CardTitle>
-                <CardDescription>AI-generated strategic recommendations for your investment approach</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {analysis.recommendations?.map((rec: string, index: number) => (
-                    <div key={index} className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                      <Badge variant="secondary" className="mt-0.5">{index + 1}</Badge>
-                      <span className="text-sm">{rec}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">Investment Analysis Hub</h1>
+        <p className="text-xl text-gray-600 max-w-3xl">
+          Comprehensive investment education combining real market data, mathematical models, 
+          and AI-powered podcast learning experiences.
+        </p>
       </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Portfolio Overview</TabsTrigger>
+          <TabsTrigger value="analysis">Market Analysis</TabsTrigger>
+          <TabsTrigger value="education">Investment Education</TabsTrigger>
+          <TabsTrigger value="podcast">AI Podcast Learning</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Portfolio Value</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">$105,000</div>
+                <p className="text-xs text-muted-foreground">+5.2% from last month</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">YTD Return</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">+10.5%</div>
+                <p className="text-xs text-muted-foreground">Outperforming S&P 500</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Portfolio Beta</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">0.85</div>
+                <p className="text-xs text-muted-foreground">Lower market risk</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Sharpe Ratio</CardTitle>
+                <PieChartIcon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">1.23</div>
+                <p className="text-xs text-muted-foreground">Efficient risk-return</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Asset Allocation</CardTitle>
+                <CardDescription>Current portfolio distribution</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={portfolioData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {portfolioData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance Comparison</CardTitle>
+                <CardDescription>Portfolio vs S&P 500 (YTD)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={performanceData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, '']} />
+                    <Line type="monotone" dataKey="portfolio" stroke="#8884d8" strokeWidth={2} name="Portfolio" />
+                    <Line type="monotone" dataKey="sp500" stroke="#82ca9d" strokeWidth={2} name="S&P 500" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analysis" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sector Analysis</CardTitle>
+              <CardDescription>Performance and allocation by sector</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={sectorsData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="sector" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Bar yAxisId="left" dataKey="allocation" fill="#8884d8" name="Allocation %" />
+                  <Bar yAxisId="right" dataKey="performance" fill="#82ca9d" name="Performance %" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Risk Metrics</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between">
+                  <span>Portfolio Volatility:</span>
+                  <span className="font-semibold">12.3%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Maximum Drawdown:</span>
+                  <span className="font-semibold">-8.2%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Value at Risk (95%):</span>
+                  <span className="font-semibold">$8,500</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Information Ratio:</span>
+                  <span className="font-semibold">0.76</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance Metrics</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between">
+                  <span>Annualized Return:</span>
+                  <span className="font-semibold">9.8%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Alpha vs Market:</span>
+                  <span className="font-semibold">+2.1%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tracking Error:</span>
+                  <span className="font-semibold">4.7%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sortino Ratio:</span>
+                  <span className="font-semibold">1.45</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="education" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {investmentTopics.map((topic, index) => (
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg">{topic.title}</CardTitle>
+                  <CardDescription>{topic.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button 
+                    onClick={() => setSelectedTopic(topic.query)}
+                    className="w-full"
+                  >
+                    Generate Podcast
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="podcast" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI-Powered Investment Education</CardTitle>
+              <CardDescription>
+                Learn investment concepts through interactive podcasts with real data and mathematical models
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UniversalPodcastPlayer 
+                title="Investment Portfolio Management"
+                content={selectedTopic || "Explain the fundamentals of investment portfolio management with real market data, risk calculations including standard deviation and beta, and practical examples of diversification strategies"}
+                options={{
+                  contentType: 'investment',
+                  title: 'Investment Portfolio Management',
+                  description: 'Advanced investment strategies and portfolio optimization',
+                  includeMath: true,
+                  includeCharts: true,
+                  includeStatistics: true,
+                  audioPremium: true
+                }}
+                autoGenerate={true}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

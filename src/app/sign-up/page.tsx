@@ -3,8 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { signUp, signInWithGoogle, validatePassword } from '@/lib/auth';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,27 +27,12 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { sendEmailVerification } = useAuth();
-
-  const validatePassword = (password: string) => {
-    if (password.length < 6) {
-      return 'Password must be at least 6 characters long';
-    }
-    if (!/(?=.*[a-z])/.test(password)) {
-      return 'Password must contain at least one lowercase letter';
-    }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return 'Password must contain at least one uppercase letter';
-    }
-    if (!/(?=.*\d)/.test(password)) {
-      return 'Password must contain at least one number';
-    }
-    return null;
-  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +50,7 @@ export default function SignUpPage() {
         throw new Error(passwordError);
       }
       
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = await signUp(email, password, name);
       
       // Send email verification
       try {
@@ -85,25 +69,9 @@ export default function SignUpPage() {
       
       router.push('/dashboard');
     } catch (error: any) {
-      let errorMessage = 'An error occurred during sign up.';
-      
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = 'An account with this email already exists.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Invalid email address.';
-          break;
-        case 'auth/weak-password':
-          errorMessage = 'Password is too weak. Please choose a stronger password.';
-          break;
-        default:
-          errorMessage = error.message;
-      }
-      
       toast({
         title: 'Sign Up Error',
-        description: errorMessage,
+        description: error.message,
         variant: 'destructive',
       });
     } finally {
@@ -114,29 +82,13 @@ export default function SignUpPage() {
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
     try {
-        await signInWithPopup(auth, googleProvider);
+        await signInWithGoogle();
         toast({ title: 'Success', description: 'Account created successfully with Google.' });
         router.push('/dashboard');
     } catch (error: any) {
-        let errorMessage = 'An error occurred during Google sign up.';
-        
-        switch (error.code) {
-          case 'auth/popup-closed-by-user':
-            errorMessage = 'Sign up was cancelled.';
-            break;
-          case 'auth/popup-blocked':
-            errorMessage = 'Pop-up was blocked by your browser.';
-            break;
-          case 'auth/account-exists-with-different-credential':
-            errorMessage = 'An account already exists with this email using a different sign-in method.';
-            break;
-          default:
-            errorMessage = error.message;
-        }
-        
         toast({
             title: 'Google Sign Up Error',
-            description: errorMessage,
+            description: error.message,
             variant: 'destructive',
         });
     } finally {
@@ -168,6 +120,17 @@ export default function SignUpPage() {
               </div>
             </div>
             <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
